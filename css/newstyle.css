@@ -1,0 +1,34 @@
+.ui-slider-handle {
+	width: 15px;
+	height: 15px;
+	border: 1px solid #333;
+	top: -4px;
+
+	-moz-border-radius:10px;
+        -ms-border-radius:10px;
+	-webkit-border-radius:10px;
+	border-radius:10px;	
+	
+	background: #e6e6e6;
+	background-image: -moz-linear-gradient(top, #e6e6e6, #d5d5d5);
+	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #e6e6e6),color-stop(1, #d5d5d5));
+	
+	box-shadow: inset 0 -3px 3px #d5d5d5;	
+}
+
+.ui-slider-handle.ui-state-hover {
+	background: #fff;
+}
+
+.ui-slider-range {
+	-moz-border-radius:15px;
+        -ms-border-radius:15px;
+	-webkit-border-radius:15px;
+	border-radius:15px;
+	
+	background: #4cbae8;
+	background-image: -moz-linear-gradient(top, #4cbae8, #39a2ce);
+	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #4cbae8),color-stop(1, #39a2ce));
+	
+	box-shadow: inset 0 -3px 3px #39a2ce;
+}

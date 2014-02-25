@@ -1,0 +1,849 @@
+<!--
+ *
+ * Textize - Transcript Writing Application
+ * Code to embed in webpages or to be used as a standalone webpage.
+ *
+ *
+-->
+
+
+<html class="no-js">
+<head>
+	<title>Textize: Video</title>
+
+	<link rel="stylesheet" type="text/css" href="css/style_video.css">
+	<link rel="stylesheet" type="text/css" href="css/slider.css">
+
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/jquery-ui-1.9.0.custom.min.js"></script>
+	<script type="text/javascript" src="js/modernizr.custom.js"></script>
+	<script type="text/javascript" src="js/jquery.alerts.js"></script>
+
+	<!-- Full Modernizr Script
+	<script type="text/javascript" src="js/modernizr.js"></script>
+	-->
+
+
+
+	<script type="text/javascript">
+
+	/*
+	 *
+	 *
+	 * ENTER THE VIDEO SOURCE URL HERE:
+	 *
+	 *
+	 */
+		var video_src = "MEDIA_SRC";
+	/*
+	 *
+	 *
+	 */
+
+	 	$(document).ready( function () { document.getElementById('video').src = video_src; });
+		var heading = 'start';
+
+		var next = 'start'; 			// Which time (start/end) to insert on next click
+		var MAX_HISTORY_SIZE = 1024;	// Maximum history size
+		var history = new Array();
+		var history_count = 0;			// Number of elements in history[]
+		var startFormat;				// Format of start time
+		var endFormat;					// Format of end time
+
+
+		video.onpause = video.onplay = function(e) {
+  			playpause.value = video.paused ? 'Play' : 'Pause';
+		}
+
+
+		/* Called when Play/Pause button is clicked. */
+		function playOrPause() {
+  			if (video.ended || video.paused) {
+    			video.play();
+  				document.getElementById('playpauseimg').src = 'images/pause-icon.png';
+  				$('#video').removeClass('ended');
+  				$('#video').addClass('playing');
+  			} else {
+    			video.pause();
+  				document.getElementById('playpauseimg').src = 'images/play-icon.png';
+  				$('#video').removeClass('playing');
+  			}
+		}
+
+		next = 'start';
+
+
+		/* Get end time format. */
+		function getEndFormat() {
+			return "END_TIME_FORMAT";
+		}
+
+
+		/* Get start time format. */
+		function getStartFormat(){
+			return "START_TIME_FORMAT";
+		}
+
+		heading = 'start';
+
+
+		/* Makes start time format and end time format compatible for
+		 Regular Expression searching and matching.
+		 Returns the compatible text. */
+		function makeRECompatible(text) {
+			text = text.replace('hh', '\\d+');
+			text = text.replace('mm', '\\d+');
+			text = text.replace('ss', '\\d+');
+			text = text.replace('HH', '\\d+');
+			text = text.replace('MM', '\\d+');
+			text = text.replace('SS', '\\d+');
+			text = text.replace('[', '\\[');
+			text = text.replace(']', '\\]');
+
+			return text;
+		}
+
+
+		/* Converts a string containing time to seconds. */
+		function getSecsFromTime(hms) {
+			hms = String(hms);
+			var re = new RegExp('[0-9]+', 'g')
+			seconds = hms.match(re);
+			var seconds = parseInt(seconds[0]) * 60 * 60 + parseInt(seconds[1]) * 60 + parseInt(seconds[2]);
+			return seconds;
+		}
+
+
+		/* Seeks video to the appropriate time when a heading is clicked.
+		 Args:
+				number: the index of heading (the position in the heading list)
+		*/
+		function changeTime(number) {
+			var text = $('#h' + number).text();
+			startFormat = getStartFormat();
+			startFormat = makeRECompatible(startFormat);
+
+			startFormat = text.match(startFormat);
+			var secs = getSecsFromTime(startFormat);
+
+			video.currentTime = secs;
+		}
+
+
+		/* Dumps text for previewing in <div> with id='preview-area'. */
+		function dumpText() {
+			var text = document.getElementById('editor-area').value;
+			startFormat = getStartFormat();
+			endFormat = getEndFormat();
+
+			startFormat = makeRECompatible(startFormat);
+			endFormat = makeRECompatible(endFormat);
+
+			if(document.getElementById('end-time-checkbox').checked == false)
+				endFormat = "";
+
+			var counter = 0;
+			var re = new RegExp(startFormat + endFormat + ".*", 'g');
+			text = text.replace(re, function(thematch) { return "<span class='preview-paragraph' id='" + counter++ + "'>" + thematch + "</span>"});
+
+			re = new RegExp(startFormat + endFormat, 'g');
+			text = text.replace(re, function(thematch) {return "<span style='display: none;'>" + thematch + "</span>";});
+
+			re = new RegExp('\\[\\[.*\\]\\]', 'g');
+			text = text.replace(re, function(thematch) {return "<span style='font-weight: bold;'>" + thematch + "</span>";});
+			re = new RegExp('\\[\\[', 'g');
+			text = text.replace(re, '');
+			re = new RegExp('\\]\\]', 'g');
+			text = text.replace(re, '');
+
+			document.getElementById('preview-area').innerHTML = text;
+		}
+
+
+		/* Dumps heading for previewing in <div> with id='heading-area'. */
+		function dumpHeadings(){
+			var text = document.getElementById('editor-area').value;
+			startFormat = getStartFormat();
+			endFormat = getEndFormat();
+
+			startFormat = makeRECompatible(startFormat);
+			endFormat = makeRECompatible(endFormat);
+
+			if(document.getElementById('end-time-checkbox').checked == false)
+				endFormat = "";
+
+			headingFormat = "\\[\\[.*\\]\\]";
+			var counter = 0;
+			var re = new RegExp(startFormat + endFormat + headingFormat, 'g');
+			var re2 = new RegExp(startFormat + endFormat);
+			var re3 = new RegExp('\\[\\[', 'g');
+			var re4 = new RegExp('\\]\\]', 'g');
+			text = text.match(re);
+
+			for(i = 0; i < text.length; i++) {
+				text[i] = text[i].replace(re, function(thematch) { return "<a class='preview-paragraph' id='h" + ++counter + "' href='javascript: changeTime(\"" + counter + "\")'>" + thematch + "</a>"; });
+				
+				text[i] = text[i].replace(re2, function(thematch) {return "<span style='color: #BDBDBD;'>" + thematch + "</span>";});
+				text[i] = text[i].replace(re3, '');
+				text[i] = text[i].replace(re4, '');
+			}
+
+			text = text.join(' ');
+			document.getElementById('heading-area').innerHTML = text;
+		}
+
+		var i = -1;
+		var previewPos = -1;
+		var prev = -1;
+
+
+		/* Synchronizes transcript with the audio/video.
+		 Checks if the current time is matched with any element in history[].
+		 If matches:
+				  - Current time is the start-time, then scroll to that 
+					transcript and apply formatting.
+			  	  - Current time is the end-time, then remove formatting 
+					from the previous transcript.
+		 If doesn't match:
+				  - Do nothing.	*/
+		function rollToPos() {
+			var startFormat = document.getElementById('start-time-format').value;
+			var endFormat = document.getElementById('end-time-format').value;
+
+			if(startFormat == "")
+				startFormat = '[hh:mm:ss] ';
+			if(endFormat == "")
+				endFormat = '- [hh:mm:ss] ';
+		
+			var currtime = timeFormat(startFormat, video.currentTime);
+			
+			i = history.indexOf(currtime);
+			if(i == -1 && document.getElementById('end-time-checkbox').checked == true)
+			{
+				currtime = timeFormat(endFormat, video.currentTime);
+				i = history.indexOf(currtime);
+			}
+			
+			if(i != -1)
+			{
+				if(i%2 == 0)
+				{
+					if(document.getElementById('end-time-checkbox').checked == true)
+						i = i / 2;
+					var a = '#' + prev;
+					var b = '#' + i;
+				
+					$(a).removeClass('current-paragraph');
+					$(b).addClass('current-paragraph');
+				
+					var target = b;
+					$('#preview-area').scrollTo(target, 400);
+					prev = i;
+				}
+				else if(document.getElementById('end-time-checkbox').checked == true && i%2 == 1)
+				{
+					var a = '#' + prev;
+
+					$(a).removeClass('current-paragraph');
+					prev = i;
+				}
+				else if(document.getElementById('end-time-checkbox').checked == false)
+				{
+					var a = '#' + prev;
+					var b = '#' + i;
+
+					$(a).removeClass('current-paragraph');
+					$(b).addClass('current-paragraph');
+				
+					var target = b;
+					$('#preview-area').scrollTo(target, 400);
+					prev = i;
+				}
+			}
+		}
+
+
+		/* Binds the audio/video with rollToPos() function to synchronize the 
+		 transcript. */
+		function playAndRoll() {
+			$('#video').bind('timeupdate', rollToPos);
+		}
+
+
+		/* Preview the work.
+		 Called when Ctrl+P is pressed or 'Preview' button is pressed. */
+		function preview() {
+			if($('#preview-area').is(':visible')) {
+				closePreview();
+				return;
+			}
+
+			$('#editor-area').hide();		// Hide the textbox 
+			$('#preview-area').show();		// Show the preview-area <div>
+			$('#preview-button').hide();	
+			$('#close-preview-button').show();	
+			$('#controldiv').hide();		// Hide the <div> with control buttons
+			$('#heading-div').show();		// Show the <div> where heading will be displayed
+			$(document).scrollTo('#header', 0);
+
+			if(!(video.paused || video.ended || video.seeking 
+				|| video.readyState < video.HAVE_FUTURE_DATA || video.currentTime > 0)) {
+				video.pause();
+				document.getElementById('playpauseimg').src = 'images/play-icon.png';
+  				$('#video').removeClass('playing');
+  			}
+
+			previewPos = video.currentTime;		// Save current time
+			video.currentTime = 0;
+
+			dumpText();		// Dump the text in the <div> with id="preview-area"
+			dumpHeadings();	// Dump the headings in the <div> with id="heading-div"
+
+			$('#container').scrollTo('#header', 0); // Just some scrolling fix.
+			playAndRoll();	// Binds the transcripts with audio/video
+		}
+
+
+		/* Close the preview.
+		 Called when 'Close Preview' button is pressed. */
+		function closePreview() {
+			i = -1;
+			prev = -1;
+			$('#video').unbind('timeupdate', rollToPos);	// Unbind transcript synchronization
+			$('#preview-area').hide();						// Hide the preview-area <div>
+			$('#editor-area').show();						// Show the textbox
+			$('#close-preview-button').hide();
+			$('#preview-button').show();
+			$('#controldiv').show();						// Show the <div> with control buttons
+			$('#heading-div').hide();						// Hide the <div> with headings
+			video.pause();
+			document.getElementById('playpauseimg').src = 'images/play-icon.png';
+  			$('#video').removeClass('playing');
+
+  			$('#container').scrollTo('#header', 0);
+
+			video.currentTime = previewPos;					// Seek the audio/video to paused time
+		}
+
+
+		/* Clears the textbox, history[].
+		 Called when 'Clear' button is pressed. */
+		function clearText() {
+			jConfirm('Are you sure you want to clear the transcript? This can not be undone.', '', function(result) {
+   				if(result == true) {
+   					document.getElementById('editor-area').value = "";
+   					history.length = 0;
+   					history_count = 0;
+   				}
+			});
+		}
+
+
+		/* Updates the history[] and history_count variables if any changes
+		 have been made to the transcript timings manually. */
+		function refreshText() {
+			var startFormat = getStartFormat();
+			var endFormat = getEndFormat();
+
+			startFormat = makeRECompatible(startFormat);
+			endFormat = makeRECompatible(endFormat);
+
+			if(document.getElementById('end-time-checkbox').checked == false) {
+				history.length = 0;
+				history_count = 0;
+
+				startFormat = new RegExp(startFormat, 'g');
+				history = document.getElementById('editor-area').value.match(startFormat);
+				history_count = history.length;
+			}
+			else {
+				history.length = 0;
+				history_count = 0;
+
+				startFormat = startFormat + '-';
+				startFormat = new RegExp(startFormat, 'g');
+				endFormat = new RegExp(endFormat, 'g');
+				var startTimes = document.getElementById('editor-area').value.match(startFormat);
+				var endTimes = document.getElementById('editor-area').value.match(endFormat);
+
+				var i = 0;
+				var startTimesCount = startTimes.length;
+				var endTimesCount = endTimes.length;
+				
+				for(i = 0; i < startTimesCount; i++)
+					history[2*i] = startTimes[i].substring(0, startTimes[i].length - 1);
+				for(i = 0; i < endTimesCount; i++)
+					history[2*i + 1] = endTimes[i];
+				
+				history_count = history.length;
+			}
+
+			if(history_count == 0)
+				document.getElementById('end-time-checkbox').disabled = false;
+		}
+
+
+	</script>
+
+	<!--Style elements for custom fonts-->
+	<style type="text/css">
+		@font-face {
+			font-family: andika;
+			src: url('fonts/andika.ttf');
+		}
+
+		.time-controls{
+			float: right;
+			font-family: "DejaVu Sans";
+			color: #F6F4F4;
+			font-size: 0.8em;
+		}
+
+		@font-face {
+			font-family: 'balham';
+			src: url('fonts/Balham.eot');
+			src: local('☺'), 
+				url('fonts/Balham.woff') format('woff'), 
+				url('fonts/Balham.ttf') format('truetype'), 
+				url('fonts/Balham.svg') format('svg');
+		}
+
+	</style>
+</head>
+
+<body>
+	<div id="container">
+	
+	<div id="textize-container">
+
+		<div id="content">
+			<div id="videodiv">
+				<video id="video" controls>
+					
+				</video>
+
+				<div class="video-controls">
+					<div class="play-pause-controls">
+						<button class="playpause" onclick="playOrPause()">
+							<img id="playpauseimg" src="images/play-icon.png"/>
+						</button>
+					</div>
+					<div class="slider" id="seekslider">
+					</div>
+					<div class="volume-wrapper">
+						<div class="slider" style="float: right; margin-top: 18px;">
+						</div>
+						<div class="volume-controls" style="margin-right: 2px;">
+							<button class="volume-button"><img src="images/volume-icon.png" id="volumeimg"/></button>
+						</div>
+					</div>
+					<div class="time-controls">
+						<table class="time-table">
+							<tr class="current-time">
+								<td class="current-time-span"></td>
+							</tr>
+							<tr class="total-time">
+								<td class="total-time-span"></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<div id="editor">
+					<div id="preview-area"></div>
+					<textarea id="editor-area" placeholder="Text goes here.."></textarea>
+			</div>
+
+			<div id="heading-div">
+				<div id="heading-area">
+				</div>
+			</div>
+
+			<div id="controldiv">
+				<button accesskey="p" class="control-button" id="insert-time" onClick="insertTime()" title="Insert Current Video Time">Insert Time<br/><span style="font-size: 12px">(Ctrl+I)</span></button>
+
+				<button accesskey="z" class="control-button" id="undo-last-insert" onClick="undoLastInsert()" title="Undo Last Insert">Undo<br/><span style="font-size: 12px">(Ctrl+U)</span></button>
+
+				<table id="time-controls-table" style="float: right;">
+					<tr>
+						<td>
+							<input type="checkbox" id="start-time-checkbox" class="checkbox" name="time" value="start-time" checked="checked"/>
+							<label for="start-time-checkbox" title="Start time insertion is enabled" class="checkbox-label">Start Time</label>
+						</td>
+						<td>
+							<input type="text" id="start-time-format" class="time-format" name="start-time-format" value="[hh:mm:ss] "  title="Start Time Format"/>
+						</td>
+					</tr>
+
+					<tr>
+						<td>
+							<input type="checkbox" id="end-time-checkbox" class="checkbox" name="time" value="end-time">
+							<label for="end-time-checkbox" title="Click to enable/disable end time insertion" class="checkbox-label">&nbsp;End Time&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" id="end-time-format" class="time-format" name="end-time-format" disabled value="- [hh:mm:ss] "  title="End Time Format"/>
+						</td>
+					</tr>
+			</div> 
+
+		<script> 
+
+			// Code for tipTip plugin
+			$(function(){
+				$(".control-button").tipTip({maxWidth: "auto", edgeOffset: 20, delay: 20});
+			});
+
+			$(function(){
+				$(".time-format").tipTip({maxWidth: "auto", edgeOffset: 20, delay: 20});
+			});
+
+			$(function(){
+				$(".checkbox-label").tipTip({maxWidth: "auto", edgeOffset: 20, delay: 20});
+			});
+
+			var video = document.getElementById('video');
+			var flag = 0;
+			var seeksliding = true;
+
+			// Seek Slider
+
+			/* We need to keep polling the video until it is ready, otherwise
+			 we can't determine the duration, and can't create the slider.*/
+			t = window.setInterval(function(){
+				if(video.readyState > 0) {
+					$( ".slider:eq(0)" ).slider({
+					    animate: true,
+		                range: "min",
+		                value: 0,
+		                min: 0,
+		                max: video.duration,
+						step: 0.01,
+		                
+						//this gets a live reading of the value and prints it on the page
+		                slide: function( event, ui ) {
+		                	seeksliding = true;
+		                	video.currentTime = ui.value;
+		                },		
+
+						//this updates the hidden form field so we can submit the data using a form
+		                change: function(event, ui) { 
+		                
+		                },		
+
+		                stop: function(event, ui) {
+		                	seeksliding: false;
+		                }		
+					});
+					seekUpdate();
+					$(".total-time-span").text(timeFormat('hh:mm:ss', video.duration));
+					clearInterval(t);
+				}
+			}, 1000);
+
+
+			/* Formats the time provided in 'seconds' to the provided 'format'.
+			Format should contain hh,mm,ss.
+			hh will be replaced with hours, mm with minutes, and ss with 
+			seconds. */
+			function timeFormat(format, seconds){
+
+				var hours = 0;
+				var mins = 0;
+				var secs = 0;
+
+				if(format.indexOf("hh") != -1 || format.indexOf("HH") != -1) {
+					hours = Math.floor(seconds/3600);
+				} 
+
+				if(format.indexOf("mm") != -1 || format.indexOf("MM") != -1) {
+					var mins = Math.floor((seconds - hours * 3600)/60);
+				}
+
+				if(format.indexOf("ss") != -1 || format.indexOf("SS") != -1) {
+					var secs = Math.floor(seconds - hours * 3600 - mins * 60);	
+				}
+
+				if(hours < 10) hours = "0" + hours;
+				if(mins < 10) mins = "0" + mins;
+				if(secs < 10) secs = "0" + secs;	
+
+				format = format.replace('hh', hours);
+				format = format.replace('HH', hours);
+				format = format.replace('mm', mins);
+				format = format.replace('MM', mins);
+				format = format.replace('ss', secs);
+				format = format.replace('SS', secs);
+				return format;
+			}
+
+
+			/* Updates the seek slider and current time. */
+			function seekUpdate() {
+				var currenttime = video.currentTime;
+				$(".slider:eq(0)").slider('value', currenttime);
+				$(".current-time-span").text(timeFormat('hh:mm:ss', currenttime));
+				$(".total-time-span").text(timeFormat('hh:mm:ss', video.duration));
+			};
+			
+			// Call seekUpdate() whenever time of the audio/video changes.
+			$("#video").bind('timeupdate', seekUpdate);
+
+			// When the video is ended.
+			video.onended = function(event) {
+				document.getElementById('playpauseimg').src = 'images/play-icon.png';
+				$('#video').removeClass('playing');
+				$('#video').addClass('ended');
+			}
+
+			video.canplay = function(event) {
+				$(".total-time-span").text(timeFormat('hh:mm:ss', video.duration));
+			}
+
+
+
+			// Volume Controls
+			var video_volume = 0.5;
+			$(".slider:eq(1)").slider({
+				value: video_volume,
+				range: "min",
+				max: 1,
+				step: 0.05,
+				animate: true,
+				slide:function(event, ui){
+					video.muted = false;
+					video_volume = ui.value;
+					video.volume = ui.value;
+
+					if(ui.value >= 0.5) {
+						document.getElementById('volumeimg').src = 'images/volume-icon.png';
+					} else {
+						document.getElementById('volumeimg').src = 'images/volume-low-icon.png';
+					};
+
+					if(ui.value == 0)
+						document.getElementById('volumeimg').src = 'images/mute-icon.png';
+					
+				}
+			});
+
+			var muteVolume = function() {
+				if(video.muted == true) {
+					video.muted = false;
+					video.volume = video_volume;
+					$(".slider:eq(1)").slider('value', video_volume);
+					
+					if(video_volume >= 0.5 ) {
+						document.getElementById('volumeimg').src = 'images/volume-icon.png';					
+					} else {
+						document.getElementById('volumeimg').src = 'images/volume-low-icon.png';
+					};
+
+				} else {
+					video_volume = video.volume;
+					video.muted = true;
+					$(".slider:eq(1)").slider('value', '0');
+					
+					document.getElementById('volumeimg').src = 'images/mute-icon.png';
+				};
+			};
+
+			// Mute audio/video when volume icon is clicked.
+			$(".volume-button").click(muteVolume);
+
+			// Remove the default controls
+			$("#video").removeAttr('controls');
+
+
+			// Display
+
+			var winw = $(window).width();
+			var winh = window.innerHeight;
+
+			// Display elements according to the screen size
+			var checkWindow = function() {
+				winw = $('#textize-container').width();
+				$('#editor-area').height('0px');
+				$('#preview-area').height('0px');
+				winh = $('#textize-container').height();
+
+				var editor_height = winh - 90;
+				$('#editor-area').height(editor_height + 'px');
+				$('#preview-area').height(editor_height + 'px');
+
+				// Size the text-editor div
+				if(winw > 1200){
+					$('#editor').width('52%');
+				} else if(winw < 270) {
+					var editor_width = 52 - Math.floor((1360 - winw)/30);
+					$('#editor').width(editor_width + '%');
+				} else if(winw < 370) {
+					var editor_width = 52 - Math.floor((1360 - winw)/50);
+					$('#editor').width(editor_width + '%');
+				} else if(winw < 530){
+					var editor_width = 52 - Math.floor((1360 - winw)/80);
+					$('#editor').width(editor_width + '%');
+				} else if(winw < 850){
+					var editor_width = 52 - Math.floor((1360 - winw)/200);
+					$('#editor').width(editor_width + '%');
+				};
+
+				if(winw > 1200) {
+					$('.slider:eq(1)').show();
+				};
+
+				if(winw < 1200) {
+					$('.slider:eq(1)').hide();
+				};
+
+				if(winw < 1070) {
+					$('.time-controls').hide();
+				};
+
+				if(winw > 1070) {
+					$('.time-controls').show();
+				};
+
+				if(winw < 910) {
+					$('.volume-controls').hide();
+				};
+
+				if(winw > 910) {
+					$('.volume-controls').show();
+				};
+
+				if(winw < 780) {
+					$('#seekslider').hide();
+				};
+
+				if(winw > 780) {
+					$('#seekslider').show();
+				};
+
+				var heading_height = editor_height - $('#videodiv').height() - 80;
+				var heading_width = $('#videodiv').width() + 24;
+				$('#heading-div').height(heading_height + 'px');
+				$('#heading-div').width(heading_width + 'px');
+			};
+
+
+			checkWindow();
+		
+			// Fluid Layout
+			$(window).resize(function(){
+				winw = $('#textize-container').width();
+				winh = $('#textize-container').height();
+
+				var editor_height = winh - 90;
+				$('#editor-area').height(editor_height + 'px');
+				$('#preview-area').height(editor_height + 'px');
+
+				// Resize the text-editor div
+				if(winw > 1200){
+					$('#editor').width('52%');
+				} else if(winw < 270) {
+					var editor_width = 52 - Math.floor((1360 - winw)/30);
+					$('#editor').width(editor_width + '%');
+				} else if(winw < 370) {
+					var editor_width = 52 - Math.floor((1360 - winw)/50);
+					$('#editor').width(editor_width + '%');
+				} else if(winw < 530){
+					var editor_width = 52 - Math.floor((1360 - winw)/80);
+					$('#editor').width(editor_width + '%');
+				} else if(winw < 850){
+					var editor_width = 52 - Math.floor((1360 - winw)/200);
+					$('#editor').width(editor_width + '%');
+				};
+
+				if(winw > 1200) {
+					$('.slider:eq(1)').show();
+				};
+
+				if(winw < 1200) {
+					$('.slider:eq(1)').hide();
+				};
+
+				if(winw < 1070) {
+					$('.time-controls').hide();
+				};
+
+				if(winw > 1070) {
+					$('.time-controls').show();
+				};
+
+				if(winw < 910) {
+					$('.volume-controls').hide();
+				};
+
+				if(winw > 910) {
+					$('.volume-controls').show();
+				};
+
+				if(winw < 780) {	
+					$('#seekslider').hide();
+				};
+
+				if(winw > 780) {
+					$('#seekslider').show();
+				};
+
+				var heading_height = editor_height - $('#videodiv').height() - 80;
+				var heading_width = $('#videodiv').width() + 24;
+				$('#heading-div').height(heading_height + 'px');
+				$('#heading-div').width(heading_width + 'px');
+		});
+
+		// Start and End time checkboxes
+		$('#start-time-checkbox').click(function() {
+			var $this = $(this);
+
+			if($this.is(':checked')) {
+				$('#start-time-format').prop('disabled', false);
+			} else {
+				$('#start-time-format').prop('disabled', true);
+			};
+		});
+
+		$('#end-time-checkbox').click(function() {
+			var $this = $(this);
+
+			if($this.is(':checked')) {
+				$('#end-time-format').prop('disabled', false);
+			} else {
+				$('#end-time-format').prop('disabled', true);
+			};
+		});
+
+		/* Shows an error message which is passed as 'errorMessage'. */
+		function showError(errorMessage) {
+			$('#select-file:nth-child(2) #select-text').text(errorMessage);
+			$('#select-file:nth-child(2)').show();
+
+			$(document).click('#select-file:nth-child(2)').hide();
+		}
+
+		$(document).ready(checkVideoCompatibility());
+
+
+		/* Checks audio/video compatibility. */
+		function checkVideoCompatibility() {
+			$('#select-file:nth-child(2)').hide();
+			if(!Modernizr.video)
+			{
+				showError("Oops! Your browser doesn't support HTML5 video.");
+			}
+
+    		if (!URL) {
+        		showError("Oops! Your browser doesn't support blob URLs.")
+    		}   	
+		}
+
+		$(document).ready(refreshText());
+		$(document).ready(preview());
+        </script> 
+
+		</div>
+	</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,87 @@
+#popup_container {
+	font-family: Arial, sans-serif;
+	font-size: 12px;
+	min-width: 300px; /* Dialog will be no smaller than this */
+	width: 100%; /* Dialog will wrap after this width */
+	background: rgba(0, 0, 0, 0.8);
+	color: #FFF;
+	height: 125px;
+}
+
+#popup_title {
+	font-size: 14px;
+	font-weight: bold;
+	text-align: center;
+	line-height: 1.75em;
+	color: #fff;
+	cursor: default;
+	padding: 0em;
+	margin: 0em;
+}
+
+#popup_content {
+/*	background: 16px 16px no-repeat url(images/info.gif);*/
+	font-family: 'balham', Georgia, serif;
+	font-size: 18px;
+	padding: 1em 1.75em;
+	margin: 0em;
+}
+
+#popup_content.alert {
+/*	background-image: url(images/info.gif); */
+}
+
+#popup_content.confirm {
+/*	background-image: url(images/important.gif);*/
+}
+
+#popup_content.prompt {
+	background-image: url(images/help.gif);
+}
+
+#popup_message {
+	text-align: center;
+}
+
+#popup_panel {
+	text-align: center;
+	margin: 1em 0em 0em 1em;
+}
+
+#popup_prompt {
+	margin: .5em 0em;
+}
+
+.alert-class input[type='button'] {
+	cursor: hand;
+	cursor: pointer;
+	outline: none;
+	display: inline-block;
+	outline: none;
+	border: 0px;
+	border-top: 1px solid #96d1f8;
+	background: #507c99;
+	background: -webkit-gradient(linear, left top, left bottom, from(#5ca2d1), to(#507c99));
+	background: -webkit-linear-gradient(top, #5ca2d1, #507c99);
+	background: -moz-linear-gradient(top, #5ca2d1, #507c99);
+	background: -ms-linear-gradient(top, #5ca2d1, #507c99);
+	background: -o-linear-gradient(top, #5ca2d1, #507c99);
+	padding: 9.5px 19px;
+	-webkit-border-radius: 8px;
+	-moz-border-radius: 8px;
+	border-radius: 8px;
+	text-shadow: rgba(0,0,0,.4) 0 1px 0;
+	color: white;
+	font-size: 15px;
+	font-family: 'balham', Georgia, serif;
+	text-decoration: none;
+	vertical-align: middle;
+}
+
+.alert-class input[type="button"]:active {
+	outline: none;
+    border-top: 0px;
+	box-shadow: 0px 0px 20px 2px #0099FF;
+	-webkit-box-shadow: 0px 0px 20px 2px #0099FF;
+	-moz-box-shadow: 0px 0px 20px 2px #0099FF;   
+}
